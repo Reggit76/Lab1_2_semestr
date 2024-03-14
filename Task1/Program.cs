@@ -22,7 +22,8 @@ namespace Task1
             while (queue.Count > 1)
             {
                 // Удаляем каждый второй элемент
-                
+                int number = queue.Dequeue();
+                queue.Dequeue();
                 queue.Enqueue(number);
 
                 // Выводим оставшиеся номера на каждом шаге

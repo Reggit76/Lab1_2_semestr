@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,16 +18,7 @@ namespace Task4
                     return false;
                 }
             }
-
-            int number = 0;
-            while (true)
-            {
-                if (number.ToString() == str)
-                {
-                    return number > 0;
-                }
-                number++;
-            }
+            return true;
         }
     }
 
@@ -34,7 +26,7 @@ namespace Task4
     {
         public static void Run()
         {
-            string input = "-12345";
+            string input = Share.ReadString("Введите число: ");
 
             if (input.IsPositiveInteger())
             {

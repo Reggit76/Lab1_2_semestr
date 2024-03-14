@@ -8,10 +8,13 @@ namespace Task3
 {
     public static class CollectionExtension
     {
-        public static T Sum<T>(this IEnumerable<T> collection)
+        public static T Sum<T>(this IEnumerable<T> collection) where T : struct
         {
             if (collection == null)
                 throw new ArgumentNullException(nameof(collection));
+
+            if (typeof(T) == typeof(int) && typeof(T) == typeof(double))
+                throw new ArgumentException(nameof(T));
 
             dynamic sum = default(T);
             foreach (T item in collection)
