@@ -149,12 +149,82 @@ namespace Task5
         public int? LiveID
         {
             get { return _LiveID; }
-            set { _LiveID = value; }
+            set
+            {
+                if (_RegistrationID != value)
+                {
+                    _LiveID = value;
+                }
+
+                else _LiveID = null;
+            }
         }
     }
 
+
     public static class Task5
     {
+        public static List<Tuple<string, string>> GetPeopleOlderAge(this List<People> peoples, int age)
+        {
+            // Выдаёт ошибку при указаний отрицательного возраста
+            if (age < 0) throw new ArgumentException("Age isn't negative atribute", nameof(age));
+
+            // Рассчёт текущего года
+            int CurrentYear = DateTime.Today.Year;
+            
+            // Запрос выдающий список кортежей имён и фамилий пользователей старше указанного возраста
+            var res = peoples.Where(p => (CurrentYear - p.Birthday.Year) > age)
+                .Select(p => Tuple.Create(p.FirstName, p.LastName));
+
+            return res.ToList();
+        }
+
+        public static List<Tuple<string, string>> GetPeopleFromCity(this  List<People> peoples, List<HomeAddress> homes,
+                                                                    List<Street> streets, List<City> cities, string city)
+        {
+            if (!city.IsNormalized()) throw new ArgumentException("not avalible string", nameof(city));
+
+            var res = from people in peoples
+                      join h in homes on people.RegistrationID equals h.ID
+                      join s in streets on h.StreetID equals s.ID
+                      join c in cities on s.CityID equals c.ID
+                      where c.Title == city
+                      select Tuple.Create(people.FirstName, people.LastName);
+
+            return res.ToList();                    
+        }
+
+        public static List<string> GetCitiesContainsStreet(this List<City> cities, List<Street> streets, string substring)
+        {
+            if (!substring.IsNormalized()) throw new ArgumentException("not abalible string", nameof(substring));
+
+            var res = from city in cities
+                      join s in streets on city.ID equals s.CityID
+                      where s.Title.Contains(substring)
+                      select city.Title;
+
+            return res.ToList();
+        }
+
+        public static List<Tuple<string, string, string, string, int, string, string>> GetUserLocationInfo(this List<People> peoples, List<HomeAddress> homes,
+                                                                      List<Street> streets, List<City> cities, List<Country> countries)
+        {
+            var res = from people in peoples
+                      join h in homes on people.RegistrationID equals h.ID
+                      join s in streets on h.StreetID equals s.ID
+                      join c in cities on s.CityID equals c.ID
+                      join country in countries on c.ID equals country.ID
+                      select Tuple.Create(people.FirstName, people.LastName, s.Title, h.HomeNumber, h.Apartment, c.Title, country.Title);
+
+            return res.ToList();
+        }
+
+        public static Dictionary<string, int> GetPeopaleAgeAllHome()
+        {
+            return null;
+        }
+
+
         public static void Run()
         {
             List<Country> countries = new List<Country>();
@@ -205,13 +275,28 @@ namespace Task5
             homes.Add(new HomeAddress { ID = 9, StreetID = 8, HomeNumber = "80", Apartment = 12 });
 
             // Заполнение списка людей
-            peoples.Add(new People { ID = 1, FirstName = "Иван", LastName = "Иванов", RegistrationID = 1, Birthday = new DateTime(2000, 1, 2) });
+            peoples.Add(new People { ID = 1, FirstName = "Иван", LastName = "Иванов", RegistrationID = 1, Birthday = new DateTime(2020, 1, 2) });
             peoples.Add(new People { ID = 2, FirstName = "Петр", LastName = "Петров", RegistrationID = 2, Birthday = new DateTime(2000, 1, 2) });
-            peoples.Add(new People { ID = 3, FirstName = "Алексей", LastName = "Алексеев", RegistrationID = 3, Birthday = new DateTime(2000, 1, 2) });
+            peoples.Add(new People { ID = 3, FirstName = "Алексей", LastName = "Алексеев", RegistrationID = 3, Birthday = new DateTime(2015, 1, 2) });
             peoples.Add(new People { ID = 4, FirstName = "Иван", LastName = "Иванов", RegistrationID = 1, Birthday = new DateTime(2020, 1, 2) });
-            peoples.Add(new People { ID = 5, FirstName = "Петр", LastName = "Петров", RegistrationID = 2, Birthday = new DateTime(2000, 1, 2) });
+            peoples.Add(new People { ID = 5, FirstName = "Степан", LastName = "Лахонин", RegistrationID = 2, Birthday = new DateTime(2000, 1, 2) });
             peoples.Add(new People { ID = 6, FirstName = "Алексей", LastName = "Алексеев", RegistrationID = 3, Birthday = new DateTime(2000, 1, 2) });
 
+
+            foreach (var people in peoples.GetPeopleOlderAge(12))
+            {
+                Console.WriteLine(people.Item1 + " " + people.Item2);
+            }
+            Console.WriteLine("----------------------");
+            foreach (var people in peoples.GetPeopleFromCity(homes, streets, cities, "Москва"))
+            {
+                Console.WriteLine(people.Item1 + " " + people.Item2);
+            }
+            Console.WriteLine("----------------------");
+            foreach (var city in cities.GetCitiesContainsStreet(streets, "Арб"))
+            {
+                Console.WriteLine(city);
+            }
         }
     }
 }
