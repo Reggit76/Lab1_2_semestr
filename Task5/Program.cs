@@ -212,16 +212,33 @@ namespace Task5
             var res = from people in peoples
                       join h in homes on people.RegistrationID equals h.ID
                       join s in streets on h.StreetID equals s.ID
-                      join c in cities on s.CityID equals c.ID
-                      join country in countries on c.ID equals country.ID
-                      select Tuple.Create(people.FirstName, people.LastName, s.Title, h.HomeNumber, h.Apartment, c.Title, country.Title);
+                      join city in cities on s.CityID equals city.ID
+                      join country in countries on city.CountryID equals country.ID
+                      select Tuple.Create(people.FirstName, people.LastName, s.Title, h.HomeNumber, h.Apartment, city.Title, country.Title);
 
             return res.ToList();
         }
 
-        public static Dictionary<string, int> GetPeopaleAgeAllHome()
+        public static Dictionary<string, double> GetPeopleAgeAllHome(this List<People> peoples, List<HomeAddress> homes,
+                                                                  List<Street> streets, List<City> cities, List<Country> countries)
         {
-            return null;
+            // Рассчёт текущего года
+            int CurrentYear = DateTime.Today.Year;
+
+            // Словарь который будет хранить средний возраст людей
+            Dictionary<string, double> middleAge = new Dictionary<string, double>(StringComparer.CurrentCultureIgnoreCase);
+
+
+            var allAddress = from h in homes
+                             join s in streets on h.StreetID equals s.ID
+                             join city in cities on s.CityID equals city.ID
+                             join country in countries on city.CountryID equals country.ID
+                             select country.Title + ", " + city.Title + ", " + s.Title + ", " + h.HomeNumber;
+            middleAge = allAddress.ToList().ToDictionary(x => x, x => 0.0);
+            
+            var 
+
+            return middleAge;
         }
 
 
@@ -296,6 +313,17 @@ namespace Task5
             foreach (var city in cities.GetCitiesContainsStreet(streets, "Арб"))
             {
                 Console.WriteLine(city);
+            }
+            Console.WriteLine("----------------------");
+            foreach (var i in peoples.GetUserLocationInfo(homes, streets, cities, countries))
+            {
+                Console.WriteLine(i.Item1 + ", " + i.Item2 + ", " + i.Item3 + ", " + i.Item4 + ", " + i.Item5 + ", "
+                    + i.Item6 + ", " + i.Item7);
+            }
+            Console.WriteLine("----------------------");
+            foreach (var pair in peoples.GetPeopleAgeAllHome(homes, streets, cities, countries))
+            {
+                Console.WriteLine(pair.Key + ": " + pair.Value);
             }
         }
     }
