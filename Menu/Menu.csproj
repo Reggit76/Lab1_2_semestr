@@ -36,7 +36,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CodeFile1.cs" />
+    <Compile Include="program.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Share\Share.csproj">

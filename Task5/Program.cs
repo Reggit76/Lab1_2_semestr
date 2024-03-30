@@ -159,28 +159,45 @@ namespace Task5
                 else _LiveID = null;
             }
         }
+
+        public int CalculateAge(DateTime currentDate)
+        {
+            int age = currentDate.Year - Birthday.Year;
+
+            if (currentDate.Month < Birthday.Month || (currentDate.Month == Birthday.Month && currentDate.Day < Birthday.Day))
+            {
+                age--;
+            }
+
+            return age;
+        }
     }
 
 
     public static class Task5
     {
-        public static List<Tuple<string, string>> GetPeopleOlderAge(this List<People> peoples, int age)
+        private static List<Country> countries = new List<Country>();
+        private static List<City> cities = new List<City>();
+        private static List<Street> streets = new List<Street>();
+        private static List<HomeAddress> homes = new List<HomeAddress>();
+        private static List<People> peoples = new List<People>();
+
+        public static List<Tuple<string, string>> GetPeopleOlderAge(int age)
         {
             // Выдаёт ошибку при указаний отрицательного возраста
             if (age < 0) throw new ArgumentException("Age isn't negative atribute", nameof(age));
 
             // Рассчёт текущего года
-            int CurrentYear = DateTime.Today.Year;
+            DateTime currentDate = DateTime.Today;
             
             // Запрос выдающий список кортежей имён и фамилий пользователей старше указанного возраста
-            var res = peoples.Where(p => (CurrentYear - p.Birthday.Year) > age)
+            var res = peoples.Where(p => p.CalculateAge(currentDate) > age)
                 .Select(p => Tuple.Create(p.FirstName, p.LastName));
 
             return res.ToList();
         }
 
-        public static List<Tuple<string, string>> GetPeopleFromCity(this  List<People> peoples, List<HomeAddress> homes,
-                                                                    List<Street> streets, List<City> cities, string city)
+        public static List<Tuple<string, string>> GetPeopleFromCity(string city)
         {
             if (!city.IsNormalized()) throw new ArgumentException("not avalible string", nameof(city));
 
@@ -194,7 +211,7 @@ namespace Task5
             return res.ToList();                    
         }
 
-        public static List<string> GetCitiesContainsStreet(this List<City> cities, List<Street> streets, string substring)
+        public static List<string> GetCitiesContainsStreet(string substring)
         {
             if (!substring.IsNormalized()) throw new ArgumentException("not abalible string", nameof(substring));
 
@@ -206,50 +223,31 @@ namespace Task5
             return res.ToList();
         }
 
-        public static List<Tuple<string, string, string, string, int, string, string>> GetUserLocationInfo(this List<People> peoples, List<HomeAddress> homes,
-                                                                      List<Street> streets, List<City> cities, List<Country> countries)
+        public static List<Tuple<string, string, string, string, int, string, string>> GetUserLocationInfo()
         {
             var res = from people in peoples
-                      join h in homes on people.RegistrationID equals h.ID
+                      join h in homes on people.LiveID ?? people.RegistrationID equals h.ID
                       join s in streets on h.StreetID equals s.ID
                       join city in cities on s.CityID equals city.ID
                       join country in countries on city.CountryID equals country.ID
+                      orderby people.LastName, people.FirstName
                       select Tuple.Create(people.FirstName, people.LastName, s.Title, h.HomeNumber, h.Apartment, city.Title, country.Title);
 
             return res.ToList();
         }
 
-        public static Dictionary<string, double> GetPeopleAgeAllHome(this List<People> peoples, List<HomeAddress> homes,
-                                                                  List<Street> streets, List<City> cities, List<Country> countries)
+        public static Dictionary<int, double> GetPeopleAgeAllHome()
         {
-            // Рассчёт текущего года
-            int CurrentYear = DateTime.Today.Year;
+            DateTime currentDate = DateTime.Today;
+            var averageAgePerHome = peoples.GroupBy(p => p.RegistrationID)
+                                          .ToDictionary(g => g.Key, g => g.Average(p => p.CalculateAge(currentDate)));
 
-            // Словарь который будет хранить средний возраст людей
-            Dictionary<string, double> middleAge = new Dictionary<string, double>(StringComparer.CurrentCultureIgnoreCase);
-
-
-            var allAddress = from h in homes
-                             join s in streets on h.StreetID equals s.ID
-                             join city in cities on s.CityID equals city.ID
-                             join country in countries on city.CountryID equals country.ID
-                             select country.Title + ", " + city.Title + ", " + s.Title + ", " + h.HomeNumber;
-            middleAge = allAddress.ToList().ToDictionary(x => x, x => 0.0);
-            
-            var 
-
-            return middleAge;
+            return averageAgePerHome;
         }
 
 
         public static void Run()
         {
-            List<Country> countries = new List<Country>();
-            List<City> cities = new List<City>();
-            List<Street> streets = new List<Street>();
-            List<HomeAddress> homes = new List<HomeAddress>();
-            List<People> peoples = new List<People>();
-
             // Заполнение списка стран
             countries.Add(new Country { ID = 1, Title = "Россия" });
             countries.Add(new Country { ID = 2, Title = "США" });
@@ -292,38 +290,38 @@ namespace Task5
             homes.Add(new HomeAddress { ID = 9, StreetID = 8, HomeNumber = "80", Apartment = 12 });
 
             // Заполнение списка людей
-            peoples.Add(new People { ID = 1, FirstName = "Иван", LastName = "Иванов", RegistrationID = 1, Birthday = new DateTime(2020, 1, 2) });
-            peoples.Add(new People { ID = 2, FirstName = "Петр", LastName = "Петров", RegistrationID = 2, Birthday = new DateTime(2000, 1, 2) });
-            peoples.Add(new People { ID = 3, FirstName = "Алексей", LastName = "Алексеев", RegistrationID = 3, Birthday = new DateTime(2015, 1, 2) });
-            peoples.Add(new People { ID = 4, FirstName = "Иван", LastName = "Иванов", RegistrationID = 1, Birthday = new DateTime(2020, 1, 2) });
-            peoples.Add(new People { ID = 5, FirstName = "Степан", LastName = "Лахонин", RegistrationID = 2, Birthday = new DateTime(2000, 1, 2) });
-            peoples.Add(new People { ID = 6, FirstName = "Алексей", LastName = "Алексеев", RegistrationID = 3, Birthday = new DateTime(2000, 1, 2) });
+            peoples.Add(new People { ID = 1, FirstName = "Иван", LastName = "Иванов", RegistrationID = 1, Birthday = new DateTime(2020, 3, 31) });
+            peoples.Add(new People { ID = 2, FirstName = "Петр", LastName = "Петров", RegistrationID = 2, Birthday = new DateTime(2004, 3, 31) });
+            peoples.Add(new People { ID = 3, FirstName = "Алексей", LastName = "Алексеев", RegistrationID = 3, Birthday = new DateTime(2015, 3, 31) });
+            peoples.Add(new People { ID = 4, FirstName = "Иван", LastName = "Крайнов", RegistrationID = 1, Birthday = new DateTime(2020, 3, 31) });
+            peoples.Add(new People { ID = 5, FirstName = "Степан", LastName = "Лахонин", RegistrationID = 2, Birthday = new DateTime(2001, 3, 31) });
+            peoples.Add(new People { ID = 6, FirstName = "Алексей", LastName = "Наумов", RegistrationID = 3, Birthday = new DateTime(2000, 3, 31) });
 
 
-            foreach (var people in peoples.GetPeopleOlderAge(12))
+            foreach (var people in GetPeopleOlderAge(12))
             {
                 Console.WriteLine(people.Item1 + " " + people.Item2);
             }
             Console.WriteLine("----------------------");
-            foreach (var people in peoples.GetPeopleFromCity(homes, streets, cities, "Москва"))
+            foreach (var people in GetPeopleFromCity("Москва"))
             {
                 Console.WriteLine(people.Item1 + " " + people.Item2);
             }
             Console.WriteLine("----------------------");
-            foreach (var city in cities.GetCitiesContainsStreet(streets, "Арб"))
+            foreach (var city in GetCitiesContainsStreet("Арб"))
             {
                 Console.WriteLine(city);
             }
             Console.WriteLine("----------------------");
-            foreach (var i in peoples.GetUserLocationInfo(homes, streets, cities, countries))
+            foreach (var i in GetUserLocationInfo())
             {
                 Console.WriteLine(i.Item1 + ", " + i.Item2 + ", " + i.Item3 + ", " + i.Item4 + ", " + i.Item5 + ", "
                     + i.Item6 + ", " + i.Item7);
             }
             Console.WriteLine("----------------------");
-            foreach (var pair in peoples.GetPeopleAgeAllHome(homes, streets, cities, countries))
+            foreach (var pair in GetPeopleAgeAllHome())
             {
-                Console.WriteLine(pair.Key + ": " + pair.Value);
+                Console.WriteLine("Дом номер " + pair.Key + ", в этом доме средний возраст жителей = " + pair.Value);
             }
         }
     }
